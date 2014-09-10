@@ -2,12 +2,8 @@ require 'mongo_mapper'
 require 'pry'
 require 'csv'
 require 'nokogiri'
-require 'json'
-require 'rest_client'
-require 'tweetstream'
-require 'twitter'
-require 'sinatra'
 require 'sidekiq'
+require 'sinatra'
 
 Dir[File.dirname(__FILE__) + '/extensions/*.rb'].each {|file| require file }
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
