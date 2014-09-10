@@ -14,8 +14,8 @@ class Listserv
         item_xpath: "td.normalgroup table tt",
         item_content_xpath: "td.normalgroup a",
         get_content: lambda{|item_content| RestClient.get(config.domain+config.get_content_link.call(item_content))},
-        get_content_link_regex: /\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=0\&P=(.*)\&B=--\&T=TEXT%2FPLAIN;%20charset=US-ASCII/,
-        get_content_link: lambda{|item_content| JSON.parse(item_content.search(config.item_content_xpath).to_json).flatten.reject{|x| x == "href"}.select{|u| u.scan(config.get_content_link_regex).first}.first || item_content.search(config.item_content_xpath).last.attributes.href.value}
+        get_content_link_regex: /(\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=0\&P=(.*)\&B=--\&T=TEXT%2FPLAIN;%20charset=US-ASCII|\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=7bit\&P=(.*)\&B=--\&T=text%2Fplain;%20charset=US-ASCII)/,
+        get_content_link: lambda{|item_content| JSON.parse(item_content.search(config.item_content_xpath).to_json).flatten.reject{|x| x == "href"}.select{|u| u.scan(config.get_content_link_regex).first}.first || item_content.search(config.item_content_xpath).collect(&:attributes).collect(&:href).collect(&:value).select{|u| u.scan(config.get_content_link_regex).first}.first}
       }
     }
   end
