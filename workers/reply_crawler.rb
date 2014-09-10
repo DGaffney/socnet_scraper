@@ -5,6 +5,8 @@ class ReplyCrawler
     raise "Cookie is failing!" if reply.from.include?("<[log in to unmask]>") || reply.to.include?("<[log in to unmask]>")
     ic = Iconv.new('UTF-8//IGNORE', 'UTF-8')
     reply.content = ic.iconv(reply.content)
+    reply.from = ic.iconv(reply.from)
+    reply.to = ic.iconv(reply.to)
     reply.save!
   end
 end
