@@ -10,7 +10,6 @@ require 'sinatra'
 require 'sidekiq'
 
 Dir[File.dirname(__FILE__) + '/extensions/*.rb'].each {|file| require file }
-require_relative File.dirname(__FILE__) + '/lib/transactor.rb'
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
 Dir[File.dirname(__FILE__) + '/lib/graph/*.rb'].each {|file| require file }
 Dir[File.dirname(__FILE__) + '/models/*.rb'].each {|file| require file }
@@ -21,4 +20,3 @@ MongoMapper.database = "listserv_scraper"
 Sidekiq.configure_client do |config|
   config.redis = { :size => 1 }
 end
-
