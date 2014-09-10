@@ -13,7 +13,9 @@ class Listserv
         month_xpath: "tr.normalgroup td p.archive a",
         item_xpath: "td.normalgroup table tt",
         item_content_xpath: "td.normalgroup a",
-        get_content: lambda{|item_content| resolve(config.domain+item_content.search(config.item_content_xpath).last.attributes.href.value).text}
+        get_content: lambda{|item_content| RestClient.get(config.domain+config.get_content_link.call(item_content))},
+        get_content_link_regex: /\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=0\&P=(.*)\&B=--\&T=TEXT%2FPLAIN;%20charset=US-ASCII/,
+        get_content_link: lambda{|item_content| JSON.parse(item_content.search(config.item_content_xpath).to_json).flatten.reject{|x| x == "href"}.select{|u| u.scan(config.get_content_link_regex).first}.first || item_content.search(config.item_content_xpath).last.attributes.href.value}
       }
     }
   end

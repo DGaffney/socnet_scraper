@@ -1,5 +1,6 @@
+load 'environment.rb'
 task :run_crawl do
-  Crawler.perform_async(:socnet)
+  Crawler.perform_async(ENV['LISTSERV'])
 end
 
 task :monitor do
