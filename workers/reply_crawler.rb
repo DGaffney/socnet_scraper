@@ -7,6 +7,7 @@ class ReplyCrawler
     reply.content = ic.iconv(reply.content)
     reply.from = ic.iconv(reply.from)
     reply.to = ic.iconv(reply.to)
+    reply.subject = ic.iconv(reply.subject)
     reply.save!
   end
 end
