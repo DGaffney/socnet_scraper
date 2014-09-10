@@ -4,6 +4,7 @@ require 'csv'
 require 'nokogiri'
 require 'sidekiq'
 require 'sinatra'
+require 'rest_client'
 
 Dir[File.dirname(__FILE__) + '/extensions/*.rb'].each {|file| require file }
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
