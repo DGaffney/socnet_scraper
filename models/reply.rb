@@ -6,4 +6,5 @@ class Reply
   key :date, Time
   key :content_type, String
   key :content, String
+  key :listserv, String
 end

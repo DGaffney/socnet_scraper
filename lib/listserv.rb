@@ -16,6 +16,28 @@ class Listserv
         get_content: lambda{|item_content| RestClient.get(config.domain+config.get_content_link.call(item_content))},
         get_content_link_regex: /(\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=0\&P=(.*)\&B=--\&T=TEXT%2FPLAIN;%20charset=US-ASCII|\/cgi-bin\/wa\?A3=(.*)\&L=SOCNET\&E=7bit\&P=(.*)\&B=--\&T=text%2Fplain;%20charset=US-ASCII|\/cgi-bin\/wa\?)/,
         get_content_link: lambda{|item_content| JSON.parse(item_content.search(config.item_content_xpath).to_json).flatten.reject{|x| x == "href"}.select{|u| u.scan(config.get_content_link_regex).first}.first || item_content.search(config.item_content_xpath).collect(&:attributes).collect(&:href).collect(&:value).select{|u| u.scan(config.get_content_link_regex).first}.first}
+      },
+      aoir: {
+        domain: "http://listserv.aoir.org",
+        root: "http://listserv.aoir.org/pipermail/air-l-aoir.org/",
+        month_url: lambda{|index| "http://listserv.aoir.org/pipermail/air-l-aoir.org/#{index}/subject.html"},
+        item_url: lambda{|index, item| "http://listserv.aoir.org/pipermail/air-l-aoir.org/#{index}/#{item}.html"},
+        month_url_regex: /(.*)\/subject.html/,
+        item_url_regex: lambda{|index| /(\d*).html/},
+        resolve_url: lambda{|url| Nokogiri.parse(RestClient::Request.execute(:method => :get, :url => url))},
+        root_xpath: "table td a",
+        month_xpath: "ul li a"
+      },
+      libtech: {
+        domain: "http://mailman.stanford.edu",
+        root: "http://mailman.stanford.edu/pipermail/liberationtech/",
+        month_url: lambda{|index| "http://mailman.stanford.edu/pipermail/liberationtech/#{index}/subject.html"},
+        item_url: lambda{|index, item| "http://mailman.stanford.edu/pipermail/liberationtech/#{index}/#{item}.html"},
+        month_url_regex: /(.*)\/subject.html/,
+        item_url_regex: lambda{|index| /(\d*).html/},
+        resolve_url: lambda{|url| Nokogiri.parse(RestClient::Request.execute(:method => :get, :url => url))},
+        root_xpath: "table td a",
+        month_xpath: "ul li a"
       }
     }
   end
@@ -45,21 +67,45 @@ class Listserv
   end
 
   def parse_month(content)
-    content.search(config.month_xpath).collect(&:attributes).collect(&:href).collect(&:value)
+    content.search(config.month_xpath).collect(&:attributes).collect(&:href).compact.collect(&:value)
   end
 
   def parse_item(content)
+    return self.send("parse_item_#{@listserv}", content) if self.respond_to?("parse_item_#{@listserv}")
+  end
+
+  def parse_item_socnet(content)
     email = Hash[[:subject, :from, :to, :date, :content_type, :content].zip([content.search(config.item_xpath).collect(&:text).values_at(1,3,5,7,9), config.get_content.call(content)].flatten)]
     email.date = Time.parse(email.date) if email.date.class != Time
+    email.listserv = @listserv.to_s
     email
   end
 
+  def parse_standard_item(content)
+    {
+      subject: content.search("h1")[0].text,
+      from: content.search("b")[0].text+"<"+content.search("a").first.text.strip.gsub(" at ", "@")+">",
+      to:  "air-l@listserv.aoir.org <air-l@listserv.aoir.org>",
+      date: Time.parse(content.search("i")[0].text),
+      content: content.search("pre").text,
+      listserv: @listserv
+    }
+  end
+
+  def parse_item_aoir(content)
+    parse_standard_item(content)
+  end
+
+  def parse_item_libtech(content)
+    parse_standard_item(content)
+  end
+
   def extract_months_from_month_urls(month_urls)
-    month_urls.collect{|u| u.scan(config.month_url_regex)}.flatten
+    month_urls.collect{|u| u.scan(config.month_url_regex)}.flatten.reject(&:empty?)
   end
 
   def extract_items_from_item_urls(item_urls, index)
-    item_urls.collect{|u| u.scan(config.item_url_regex.call(index))}.flatten
+    item_urls.collect{|u| u.scan(config.item_url_regex.call(index))}.flatten.reject(&:empty?)
   end
 
   def resolve(url)
